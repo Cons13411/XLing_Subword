@@ -1028,13 +1028,10 @@ void *TrainModelThread(void *id) {
                     if (last_word == -1) continue;
                     // LD: modify the context_size
                     context_vec[context_size] = last_word;
-                   // char subword[NUM_STR][MAX_STRING];
-                    int counter = vocab[last_word].ids[0]; //GetSubWordsTraining(vocab[last_word].word, subword);
-                   // printf("%s\n%i\n",vocab[last_word].word, vocab[last_word].ids[0]);
+                    int counter = vocab[last_word].ids[0];
                     real *sumSubwords = (real *)calloc(layer1_size, sizeof(real));
                     for (size_t i=1; i<=counter;i++) {
-                        int subwordId = vocab[last_word].ids[i]; //SearchVocab(subword[i]);
-                       // printf("%i\: %s\n", vocab[last_word].ids[i],vocab[subwordId].word);
+                        int subwordId = vocab[last_word].ids[i];
                         if (subwordId == -1) {
                             printf("%s\n", vocab[last_word].word);
 
@@ -1048,7 +1045,7 @@ void *TrainModelThread(void *id) {
 
                     // Forward pass:
                     // Compute hidden layer (just the average embedding of the input word which is last_word)
-                    for (c = 0; c < layer1_size; c++) neu1[c] += sumSubwords[c];//neu1[c] += syn0[c + last_word * layer1_size];
+                    for (c = 0; c < layer1_size; c++) neu1[c] += sumSubwords[c];
                     cw++;
                     free(sumSubwords);
                 }
@@ -1062,12 +1059,10 @@ void *TrainModelThread(void *id) {
                     else   word = replace_word_with_chance(&next_random,word,neu1);
                 }
                 else if (selall) {
-                    //char wordsubword[NUM_STR][MAX_STRING];
-                    //int counter = GetSubWords(vocab[word].word, wordsubword);
-                    int counter = vocab[word].ids[0]; //GetSubWordsTraining(vocab[word].word, wordsubword);
+                    int counter = vocab[word].ids[0];
                     real *sumofwordSubwords = (real *) calloc(layer1_size, sizeof(real));
                     for (size_t i = 1; i <= counter; i++) {
-                        int subwordId = vocab[word].ids[i]; //SearchVocab(wordsubword[i]);
+                        int subwordId = vocab[word].ids[i];
                         if (subwordId == -1) {
                             printf("here it is5\n");
                             exit(987);
@@ -1077,7 +1072,7 @@ void *TrainModelThread(void *id) {
                     }
                     for (size_t c = 0; c < layer1_size; c++) sumofwordSubwords[c] /= counter;
                     for (c = 0; c < layer1_size; c++)
-                        temp_h[c] = neu1[c] + sumofwordSubwords[c];//temp_h[c] = neu1[c] + syn0[c + word * layer1_size];
+                        temp_h[c] = neu1[c] + sumofwordSubwords[c];
                     free(sumofwordSubwords);
                     if (join) translation = replace_word_with_chance(&next_random, word, temp_h);
                     else word = replace_word_with_chance(&next_random, word, temp_h);
@@ -1147,7 +1142,7 @@ void *TrainModelThread(void *id) {
                                 next_random = next_random * (unsigned long long) 25214903917 + 11;
                                 //target = table[(next_random >> 16) % table_size];
                                 target = table_words[(next_random >> 16) % table_size];
-                                if (target == 0) target = next_random % (number_type-  1) + 1; //target = next_random % (vocab_size - 1) + 1;
+                                if (target == 0) target = next_random % (number_type-  1) + 1;
                                 if (target == word) continue;
                                 if (target == translation) continue;
                                 if (target == sense) continue;
@@ -1175,14 +1170,11 @@ void *TrainModelThread(void *id) {
                         // Next change should be applied here to compute negative vectors by their subwords
 
                        // l2 = target * layer1_size;// l2 is the position in the embedding array where target is embedded
-                        //----------------------------- for negative
-                        //char targetsubword[NUM_STR][MAX_STRING];
-                        //int counter = GetSubWords(vocab[target].word, targetsubword);
-                        int counter = vocab[target].ids[0]; //GetSubWordsTraining(vocab[target].word, targetsubword);
+                        int counter = vocab[target].ids[0];
                         real *sumofNegtargetSubwords = (real *) calloc(layer1_size, sizeof(real));
                         real *sumofPostargetSubwords = (real *) calloc(layer1_size, sizeof(real));
                         for (size_t i = 1; i <= counter; i++) {
-                            int subwordId = vocab[target].ids[i]; //SearchVocab(targetsubword[i]);
+                            int subwordId = vocab[target].ids[i];
                             if (subwordId == -1) {
                                 printf("%s\n", vocab[target].word);
                                 printf("here it is7\n");
@@ -1199,21 +1191,9 @@ void *TrainModelThread(void *id) {
                             sumofPostargetSubwords[c] /= counter;
 
                         }
-                        //---------------------------------------for positive
 
-//                        for (size_t i = 0; i < counter; i++) {
-//                            int subwordId = SearchVocab(targetsubword[i]);
-//                            if (subwordId == -1){
-//                                printf("here it is3\n");
-//                                exit(9872);
-//                                break;
-//                            }
-//                            for (size_t c = 0; c < layer1_size; c++) sumofPostargetSubwords[c] += syn0[c + subwordId * layer1_size];
-//                        }
-//                        for (size_t c = 0; c < layer1_size; c++) sumofPostargetSubwords[c] /= counter;
-                        //---------------------------------------
                         f = 0;
-                        for (c = 0; c < layer1_size; c++) f += neu1[c] * sumofNegtargetSubwords[c];//f += neu1[c] * syn1neg[c + l2];
+                        for (c = 0; c < layer1_size; c++) f += neu1[c] * sumofNegtargetSubwords[c];
                         // f is the computation of equation (4) in the paper
                         // Distributed Representations of Words and Phrases and their Compositionality
 
@@ -1227,18 +1207,18 @@ void *TrainModelThread(void *id) {
                         // LD: g is the error w.r.t the learning rate.
                         // This is the end of forward pass.
 
-                        for (c = 0; c < layer1_size; c++) neu1e[c] += g * sumofNegtargetSubwords[c]; //neu1e[c] += g * syn1neg[c + l2];
+                        for (c = 0; c < layer1_size; c++) neu1e[c] += g * sumofNegtargetSubwords[c];
                         for (size_t i = 1; i <= counter; i++) {
-                            int subwordId = vocab[target].ids[i]; //SearchVocab(targetsubword[i]);
+                            int subwordId = vocab[target].ids[i];
                             if (subwordId == -1) {
                                 printf("here it is8\n");
                                 break;
                             }
 
                             for (c = 0; c < layer1_size; c++) {
-                                float save_value = sumofNegtargetSubwords[c]; //syn1neg[c + l2];
-                                float save_value1 = sumofPostargetSubwords[c];//syn0[c+l2];
-                                syn1neg[c + subwordId * layer1_size] += g * neu1[c];//syn1neg[c + l2] += g * neu1[c];
+                                float save_value = sumofNegtargetSubwords[c];
+                                float save_value1 = sumofPostargetSubwords[c];
+                                syn1neg[c + subwordId * layer1_size] += g * neu1[c];
                                 if (reg_sen > 0) {
                                     // Must remember to put the learning rate there
                                     syn1neg[c + subwordId * layer1_size] -= 2 * alpha * reg_sen * (save_value - save_value1);
@@ -1258,10 +1238,9 @@ void *TrainModelThread(void *id) {
                         last_word = sen[c];
                         if (last_word == -1) continue;
                         char lastsubword[NUM_STR][MAX_STRING];
-                        //int counter1 = GetSubWords(vocab[last_word].word, lastsubword);
-                        int counter1 = vocab[last_word].ids[0];//GetSubWordsTraining(vocab[last_word].word, lastsubword);
+                        int counter1 = vocab[last_word].ids[0];
                         for (size_t i = 1; i <= counter1; i++) {
-                            int subwordId =  vocab[last_word].ids[i]; //SearchVocab(lastsubword[i]);
+                            int subwordId =  vocab[last_word].ids[i];
                             if (subwordId == -1) {
                                 printf("here it is\n");
                                 exit(9876);
