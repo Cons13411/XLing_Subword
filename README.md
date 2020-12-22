@@ -5,7 +5,7 @@ By incorporating the sub-word information during training, not only we increase 
 
 To form the sub-words, we use the same method as fastText, breaking a word into its character n-grams. For our experiments, we consider n-grams between 3-6, and these numbers are hard-coded in the code. If you would like to consider are lengths, you can simply change them in the code. 
 
-Getting started
+# Getting started
 
 To build the model, you just need to clone the files and do make. 
 
